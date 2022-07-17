@@ -20,26 +20,18 @@ pub fn run(config : Config) -> Result<(), Box<dyn Error>> {
 }
 
 pub fn search<'a>(query: &str, contents: &'a str) -> Vec<&'a str> {
-    let mut results : Vec<&str> = Vec::new();
-    for line in contents.lines() {
-        if line.contains(query) {
-            results.push(line);
-        }
-    }
-
-    results
+    contents
+        .lines()
+        .filter(|line| line.contains(query))
+        .collect()
 }
 
 pub fn search_case_insensitive<'a>(query: &str, contents: &'a str) -> Vec<&'a str> {
-    let mut results : Vec<& str> = Vec::new();
-    let query_lowercase = &query.to_lowercase();
-    for line in contents.lines() {
-        if line.to_lowercase().contains(query_lowercase) {
-            results.push(line);
-        }
-    }
-
-    results
+    let query = &query.to_lowercase();
+    contents
+        .lines()
+        .filter(|line| line.to_lowercase().contains(query))
+        .collect()
 }
 
 pub struct Config {
@@ -49,13 +41,21 @@ pub struct Config {
 }
 
 impl Config {
-    pub fn new(args: &[String]) -> Result<Config, &'static str> {
-        if args.len() < 3 {
-            return Err("Not enough arguments! Must have a query and filename.");
-        }
+    pub fn new(mut args: impl Iterator<Item = String>) 
+    -> Result<Config, &'static str> {
+        // takes ownership of an iterator instead of borrowing a &[String]
+        // more efficient than having to clone borrowed strings
 
-        let query = args[1].to_string();
-        let filename = args[2].to_string();
+        args.next(); // first argument is program name, ignore
+        
+        let query = match args.next() {
+            None => return Err("Didn't get a query string."),
+            Some(arg) => arg
+        };
+        let filename = match args.next() {
+            None => return Err("Didn't get a file name."),
+            Some(arg) => arg
+        };
 
         // checks if IGNORE_CASE environment variable is set; value is irrelevant
         let ignore_case = env::var("IGNORE_CASE").is_ok();
