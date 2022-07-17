@@ -1,6 +1,7 @@
 use std::env;
 use std::fs;
 use std::process;
+use std::error::Error;
 
 fn main() {
     // read input arguments from stdin
@@ -14,10 +15,15 @@ fn main() {
     println!("Searching for {}", config.query);
     println!("In file {}", config.filename);
 
-    let contents = fs::read_to_string(config.filename)
-        .expect("Something went wrong reading the file.");
+    run(config);    
+}
+
+fn run(config : Config) -> Result<(), Box<dyn Error>> { 
+    //catch-all error handling for file reading
+    let contents = fs::read_to_string(config.filename)?;
 
     println!("With text:\n{contents}");
+    Ok(())
 }
 
 struct Config {
